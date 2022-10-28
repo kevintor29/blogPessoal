@@ -1,7 +1,9 @@
 import e from "express";
 import { IsNotEmpty, MaxLength } from "class-validator";
 import { Entity, PrimaryGeneratedColumn,Column ,UpdateDateColumn, ManyToOne  } from "typeorm";
-import { Tema } from "src/tema/entities/tema.entitys";
+import { Tema } from "../../tema/entities/tema.entitys";
+import { UsuarioEntity } from "../../usuario/entities/usuario.entities";
+
 @Entity ({name: "tb_postagem"})
   export class Postagem{
     @PrimaryGeneratedColumn()
@@ -23,9 +25,13 @@ import { Tema } from "src/tema/entities/tema.entitys";
       onDelete: "CASCADE"
   })
   tema: Tema
+    
+    @ManyToOne(()=> UsuarioEntity,(usuario)=> usuario.postagem,{
+      onDelete: "CASCADE"
+    })
+    usuario: UsuarioEntity
 
-
-
+    
 
 }
 

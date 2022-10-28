@@ -1,10 +1,13 @@
-import { Body, Controller,Delete,Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put } from "@nestjs/common";
+import { Body, Controller,Delete,Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put, UseGuards } from "@nestjs/common";
 import { get } from "http";
 import {HttpErrorByCode} from "@nestjs/common/utils/http-error-by-code.util"
 import { PostagemService } from "../service/postagem.services";
 import { Postagem } from "../entities/entities.module";
+import { JwtAuthGuard } from "../../auth/guard/jwt-auth.guard";
 
-@Controller()
+
+@UseGuards(JwtAuthGuard)
+@Controller(`postagem`)
 export class PostagemController{
     constructor(private readonly PostagemService: PostagemService){}
     @Get()

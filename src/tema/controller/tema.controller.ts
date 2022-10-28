@@ -1,14 +1,17 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from "@nestjs/common/decorators";
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, UseGuards } from "@nestjs/common/decorators";
 import { HttpStatus } from "@nestjs/common/enums";
 import { ParseIntPipe } from "@nestjs/common/pipes";
-import { Tema } from "../entities/tema.entitys";
+import { JwtAuthGuard } from "../../auth/guard/jwt-auth.guard";
 
+import { Tema } from "../entities/tema.entitys";
 import { TemaService } from "../services/tema.sevice";
 
+@UseGuards(JwtAuthGuard)
 @Controller('/tema')
 export class TemaController {
     constructor(private readonly temaService: TemaService) { }
-
+     
+    
     @Get()
     @HttpCode(HttpStatus.OK)
     findAll(): Promise<Tema[]> {

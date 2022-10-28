@@ -1,6 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+
 import { DeleteResult, ILike, Repository } from "typeorm";
+import { Bcrypt } from "../../auth/bcrypt/bsrypt";
 import { UsuarioEntity } from "../entities/usuario.entities";
 
 
@@ -11,21 +13,28 @@ import { UsuarioEntity } from "../entities/usuario.entities";
 
     constructor(
         @InjectRepository(UsuarioEntity)
-        private UsuarioRepositori: Repository<UsuarioEntity>
+        private UsuarioRepositori: Repository<UsuarioEntity>,
+        private bcrypt: Bcrypt
     ){}
     async findAll(): Promise<UsuarioEntity[]>{
        return await this.UsuarioRepositori.find({ 
-       
+       relations:{
+         postagem: true
+       }
     })
     }
-    async findById(id: number): Promise<UsuarioEntity> {
+    async findById(id: number): Promise<UsuarioEntity| undefined> {
         let usuario = await this.UsuarioRepositori.findOne({
            where:{
             id
+        }, 
+        relations: {
+            postagem: true
         }
         })
         if (!usuario)
         throw new HttpException(`UsuarioEntity nao encontrado`,HttpStatus.NOT_FOUND)
+
         return usuario
     }
     async findByNome(nome: string):Promise<UsuarioEntity[]>{
@@ -35,23 +44,18 @@ import { UsuarioEntity } from "../entities/usuario.entities";
             }
         })
     }
-    async findByLogin(login: string):Promise<UsuarioEntity[]>{
-       
-        let plogin= await this.UsuarioRepositori.find({
+    async findByLogin(login: string):Promise<UsuarioEntity | undefined>{
+        return  await this.UsuarioRepositori.findOne({
             where:{
-                login: ILike(`%${login}%`)
+                login: login
             }
         })
-       if(!plogin ){
-            throw new HttpException(`login nao encontrado`,HttpStatus.NOT_FOUND)
-        }
-       return plogin
-         
+        
     }
     async findBySenha(senha: string):Promise<UsuarioEntity[]>{
         return await this.UsuarioRepositori.find({
             where:{
-                senha: ILike(`%${senha}%`)
+                senha: senha
             }
         })
     }
@@ -63,15 +67,28 @@ import { UsuarioEntity } from "../entities/usuario.entities";
         })
     }
     async create(usuario: UsuarioEntity):Promise<UsuarioEntity>{
+        let buscarUsuario = await this.findByLogin(usuario.login)
+        if (!buscarUsuario){
+            usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha)
        return await this.UsuarioRepositori.save(usuario)
+        }
+        throw new HttpException('Usuario  não encontrado', HttpStatus.BAD_REQUEST)
     }
+
     async update(usuario: UsuarioEntity): Promise<UsuarioEntity>{
-        let buscarUsuario= await this.findById(usuario.id)
+        let updateUsuario:UsuarioEntity= await this.findById(usuario.id)
+        let buscarUsuario= await this.findByLogin(usuario.login)
 
-        if(!buscarUsuario || !usuario.id)
-        throw new HttpException(`UsuarioEntity nao foi encontrado`,HttpStatus.NOT_FOUND)
+        if (!updateUsuario) {
+            throw new HttpException(`UsuarioEntity nao foi encontrado`,HttpStatus.NOT_FOUND)
+        }
 
+        if(!buscarUsuario && buscarUsuario.id !==usuario.id)
+        throw new HttpException(`Usuario ja cadastrado`,HttpStatus.BAD_REQUEST)
+
+        usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha)
         return await this.UsuarioRepositori.save(usuario)
+
     }
     async delete(id: number): Promise<DeleteResult> {
         let buscarUsuario = await this.findById(id)
@@ -79,6 +96,7 @@ import { UsuarioEntity } from "../entities/usuario.entities";
         if(!buscarUsuario)
             throw new HttpException('Usuario  não encontrado', HttpStatus.NOT_FOUND)
 
+      
         return await this.UsuarioRepositori.delete(id)
     }
  }

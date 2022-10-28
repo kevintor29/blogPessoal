@@ -1,4 +1,6 @@
-import { Body, Controller,Delete,Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put } from "@nestjs/common";
+import { Body, Controller,Delete,Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "../../auth/guard/jwt-auth.guard";
+
 import { UsuarioEntity } from "../entities/usuario.entities";
 import { UsuarioServices } from "../services/usuario.service";
 
@@ -6,7 +8,9 @@ import { UsuarioServices } from "../services/usuario.service";
 @Controller(`/usuario`)
 export class UsuarioController{
     constructor(private readonly usuarioservice: UsuarioServices){}
-    @Get()
+
+    @UseGuards(JwtAuthGuard)
+    @Get(`/all`)
     @HttpCode(HttpStatus.OK)
     findAll(): Promise< UsuarioEntity[] > {
         return this.usuarioservice.findAll();
@@ -24,7 +28,7 @@ export class UsuarioController{
     }
     @Get('/login/:login')
     @HttpCode(HttpStatus.OK)
-    findByLogin(@Param('login')login: string):Promise<UsuarioEntity[]>{
+    findByLogin(@Param('login')login: string):Promise<UsuarioEntity>{
         return this.usuarioservice.findByLogin(login)
     }
     @Get('/senha/:senha')
@@ -38,12 +42,14 @@ export class UsuarioController{
         return this.usuarioservice.findByFoto(foto)
     }
 
-    @Post()
+    @Post('/cadastrar')
     @HttpCode(HttpStatus.CREATED)
     create(@Body() usuario: UsuarioEntity):Promise<UsuarioEntity>{
         return this.usuarioservice.create(usuario)
     }
-    @Put()
+    
+    @UseGuards(JwtAuthGuard)
+    @Put(`/actualizar`)
     @HttpCode(HttpStatus.OK)
     update(@Body() usuario:UsuarioEntity):Promise<UsuarioEntity>{
         return this.usuarioservice.update(usuario)
