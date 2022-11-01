@@ -1,11 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from "@nestjs/common/decorators";
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { HttpStatus } from "@nestjs/common/enums";
 import { ParseIntPipe } from "@nestjs/common/pipes";
-import { Tema } from "../entities/tema.entitys";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger/dist";
+import { JwtAuthGuard } from "../../auth/guard/jwt-auth.guard";
+import { Tema } from "../entities/tema.entity";
+import { TemaService } from "../service/tema.service";
 
-import { TemaService } from "../services/tema.sevice";
-
+@ApiTags('Tema')
+@UseGuards(JwtAuthGuard)
 @Controller('/tema')
+@ApiBearerAuth()
 export class TemaController {
     constructor(private readonly temaService: TemaService) { }
 
@@ -15,8 +19,6 @@ export class TemaController {
         return this.temaService.findAll();
     }
   
-
-
     @Get('/:id')
     @HttpCode(HttpStatus.OK)
     findById(@Param('id', ParseIntPipe) id: number): Promise<Tema> {
@@ -35,8 +37,6 @@ export class TemaController {
     create(@Body() tema: Tema): Promise<Tema> {
         return this.temaService.create(tema)
     }
-
-
 
     @Put()
     @HttpCode(HttpStatus.OK)
